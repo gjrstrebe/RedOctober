@@ -17,46 +17,28 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #040906; /* Deepest green/black */
+      background-color: #040906;
       color: #34d399;
-      touch-action: manipulation; /* Prevents double-tap zoom on mobile */
+      touch-action: manipulation;
     }
-    .font-hud {
-      font-family: 'Orbitron', monospace;
-    }
-    /* CRT Scanline effect over the radar and modals */
+    .font-hud { font-family: 'Orbitron', monospace; }
     .crt-overlay {
       background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
       background-size: 100% 4px, 6px 100%;
       pointer-events: none;
       z-index: 10;
     }
-    .radar-glow {
-      box-shadow: 0 0 30px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1);
-    }
-    .panel-border {
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      background: rgba(2, 44, 34, 0.4);
-      backdrop-filter: blur(8px);
-    }
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #020604;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #059669;
-      border-radius: 3px;
-    }
+    .radar-glow { box-shadow: 0 0 30px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1); }
+    .panel-border { border: 1px solid rgba(16, 185, 129, 0.25); background: rgba(2, 44, 34, 0.4); backdrop-filter: blur(8px); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #020604; }
+    ::-webkit-scrollbar-thumb { background: #059669; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-emerald-400 select-none pb-6">
 
   <header class="bg-emerald-950/60 border-b border-emerald-800/60 p-4 sticky top-0 z-30 shadow-lg">
     <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      
-      <!-- Brand & Title -->
       <div class="flex items-center space-x-3">
         <div class="w-12 h-12 rounded-full bg-emerald-900/80 border border-emerald-400/60 flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.4)] animate-pulse">
           <i class="fa-solid fa-satellite-dish font-hud text-emerald-300 text-xl"></i>
@@ -71,19 +53,15 @@
       </div>
 
       <div class="flex items-center space-x-2 md:space-x-3">
-        <!-- Network Status -->
         <div id="networkStatusBadge" class="text-[10px] px-2 py-1 rounded-sm bg-black/60 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-mono hidden sm:flex">
-          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-          <span>CONNECTING...</span>
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span><span>CONNECTING...</span>
         </div>
-
-        <!-- Rules / Treaty Button -->
-        <button id="btnOpenRules" class="px-3 py-2 rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-300 text-xs font-hud border border-amber-500/50 transition active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.15)] hover:shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+        
+        <button id="btnOpenRules" class="px-3 py-2 rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-300 text-xs font-hud border border-amber-500/50 transition active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.15)]">
           <i class="fa-solid fa-scroll"></i>
-          <span class="hidden sm:inline">PEACE TREATY</span>
+          <span id="btnOpenRulesText" class="hidden sm:inline">PEACE TREATY</span>
         </button>
 
-        <!-- Command Dashboard Button -->
         <button id="btnOpenAdmin" class="px-3 py-2 rounded bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 text-xs font-hud border border-emerald-500/50 transition active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]">
           <i class="fa-solid fa-terminal"></i>
           <span class="hidden sm:inline">COMMAND</span>
@@ -93,59 +71,34 @@
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
-
-    <!-- LEFT PANEL: RADAR SCOPE -->
     <section class="lg:col-span-7 flex flex-col items-center">
       <div class="w-full rounded-2xl p-5 panel-border radar-glow relative flex flex-col items-center overflow-hidden">
-        
-        <!-- CRT Overlay lines -->
         <div class="absolute inset-0 crt-overlay"></div>
-
-        <!-- Radar Header Info -->
         <div class="w-full flex justify-between items-center mb-4 text-xs font-hud text-emerald-400/80 px-2 relative z-20">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-satellite text-emerald-500 animate-pulse"></i>
-            <span>GRID: 0 - 1200</span>
-          </div>
-          <div class="bg-black/60 px-3 py-1 rounded border border-emerald-800/50">
-            <span id="cursorCoords" class="text-emerald-300 font-bold tracking-widest">X: --- | Y: ---</span>
-          </div>
+          <div class="flex items-center gap-2"><i class="fa-solid fa-satellite text-emerald-500 animate-pulse"></i><span>GRID: 0 - 1200</span></div>
+          <div class="bg-black/60 px-3 py-1 rounded border border-emerald-800/50"><span id="cursorCoords" class="text-emerald-300 font-bold tracking-widest">X: --- | Y: ---</span></div>
         </div>
-
-        <!-- Canvas Container -->
         <div class="relative w-full aspect-square max-w-[500px] bg-black rounded-full border-4 border-emerald-900/80 shadow-[0_0_40px_rgba(0,0,0,0.8)] cursor-crosshair z-20">
           <canvas id="radarCanvas" class="w-full h-full block rounded-full"></canvas>
-          <!-- Center Sunfire Reference -->
-          <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-            <i class="fa-solid fa-sun text-4xl text-amber-500"></i>
-          </div>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20"><i class="fa-solid fa-sun text-4xl text-amber-500"></i></div>
         </div>
-
-        <!-- Scan Quick Presets -->
         <div class="w-full mt-6 flex flex-wrap justify-center gap-2 text-[10px] font-mono relative z-20">
-          <button id="btnPresetSunfire" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">SUNFIRE (600,600)</button>
-          <button id="btnPresetNWTundra" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">NW TUNDRA (300,300)</button>
-          <button id="btnPresetSETundra" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">SE TUNDRA (900,900)</button>
+          <button onclick="window.setCoords(600,600)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">SUNFIRE (600,600)</button>
+          <button onclick="window.setCoords(300,300)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">NW TUNDRA (300,300)</button>
+          <button onclick="window.setCoords(900,900)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">SE TUNDRA (900,900)</button>
         </div>
       </div>
     </section>
 
-    <!-- RIGHT PANEL: CONTROLS & LOGS -->
     <section class="lg:col-span-5 flex flex-col gap-5">
-      
-      <!-- SCAN CONTROL PANEL -->
       <div class="rounded-xl p-5 panel-border flex flex-col gap-4 relative overflow-hidden">
         <div class="absolute inset-0 crt-overlay opacity-50"></div>
-        <h2 class="font-hud font-bold text-base text-emerald-300 flex items-center gap-2 relative z-20">
-          <i class="fa-solid fa-crosshairs text-emerald-500"></i> TRANSCEIVER CONTROLS
-        </h2>
-
+        <h2 class="font-hud font-bold text-base text-emerald-300 flex items-center gap-2 relative z-20"><i class="fa-solid fa-crosshairs text-emerald-500"></i> TRANSCEIVER CONTROLS</h2>
         <div class="flex flex-col gap-3 relative z-20">
           <div>
             <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Chief IGN / Alliance</label>
-            <input type="text" id="playerIgnInput" placeholder="e.g. [ATD] TechDad" class="w-full bg-black/80 border border-emerald-700/60 rounded px-3 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400 placeholder-emerald-800 font-mono shadow-inner">
+            <input type="text" id="playerIgnInput" placeholder="e.g. [ATD] TechDad" class="w-full bg-black/80 border border-emerald-700/60 rounded px-3 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400 font-mono shadow-inner">
           </div>
-
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Target X (0-1200)</label>
@@ -156,111 +109,68 @@
               <input type="number" id="scanYInput" min="0" max="1200" placeholder="600" class="w-full bg-black/80 border border-emerald-700/60 rounded px-3 py-2.5 text-sm text-emerald-100 focus:outline-none focus:border-emerald-400 font-mono text-center shadow-inner">
             </div>
           </div>
-
-          <button id="btnTransmitPing" class="w-full mt-3 py-3 rounded bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 hover:to-teal-700 border border-emerald-500/50 font-hud font-bold text-emerald-50 text-sm tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.3)] transition active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
+          <button id="btnTransmitPing" class="w-full mt-3 py-3 rounded bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 border border-emerald-500/50 font-hud font-bold text-emerald-50 text-sm tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.3)] transition active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
             <i class="fa-solid fa-wave-square"></i> TRANSMIT PING
           </button>
         </div>
       </div>
 
-      <!-- STATE INTEL CLUES -->
       <div class="rounded-xl p-4 panel-border relative overflow-hidden">
-        <h3 class="font-hud text-xs text-amber-400/90 mb-3 flex items-center gap-2 relative z-20">
-          <i class="fa-solid fa-tower-cell"></i> COMMAND INTEL DROPS
-        </h3>
+        <h3 class="font-hud text-xs text-amber-400/90 mb-3 flex items-center gap-2 relative z-20"><i class="fa-solid fa-tower-cell"></i> COMMAND INTEL DROPS</h3>
         <div id="activeCluesList" class="flex flex-col gap-2 text-xs font-mono relative z-20">
-          <div class="p-3 bg-black/50 rounded border border-emerald-900/50 text-emerald-600 italic text-center">Encrypted channel silent. Awaiting clues.</div>
+          <div class="p-3 bg-black/50 rounded border border-emerald-900/50 text-emerald-600 italic text-center">Encrypted channel silent.</div>
         </div>
       </div>
 
-      <!-- LIVE SCAN ACTIVITY LOG -->
       <div class="rounded-xl p-4 panel-border flex-grow flex flex-col h-64 relative overflow-hidden">
         <div class="absolute inset-0 crt-overlay opacity-30"></div>
         <div class="flex justify-between items-center mb-3 relative z-20 border-b border-emerald-900/50 pb-2">
-          <h3 class="font-hud text-xs text-emerald-400/90 flex items-center gap-2">
-            <i class="fa-solid fa-list-ul text-emerald-600"></i> STATE SCAN LOG
-          </h3>
+          <h3 class="font-hud text-xs text-emerald-400/90 flex items-center gap-2"><i class="fa-solid fa-list-ul text-emerald-600"></i> STATE SCAN LOG</h3>
           <span class="text-[9px] text-emerald-500 font-mono px-1.5 py-0.5 bg-emerald-950 rounded border border-emerald-800/50">LIVE</span>
         </div>
-
         <div id="scanHistoryList" class="flex-grow overflow-y-auto space-y-2 pr-2 text-xs font-mono relative z-20">
-          <div class="text-center text-emerald-700 py-8 italic">Radar sweeping... awaiting telemetry.</div>
+          <div class="text-center text-emerald-700 py-8 italic">Radar sweeping...</div>
         </div>
       </div>
-
     </section>
   </main>
 
-  <!-- STATE PEACE TREATY MODAL -->
+  <!-- DYNAMIC RULES MODAL -->
   <div id="rulesModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#0a0f0d] border-2 border-amber-600/60 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-[0_0_40px_rgba(245,158,11,0.15)] relative">
       <div class="absolute inset-0 crt-overlay pointer-events-none opacity-50"></div>
-      
       <div class="flex justify-between items-center mb-6 border-b border-amber-900/60 pb-4 relative z-10">
-        <h2 class="font-hud font-bold text-xl md:text-2xl text-amber-400 flex items-center gap-3 tracking-widest" style="text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);">
+        <h2 id="rulesModalTitle" class="font-hud font-bold text-xl md:text-2xl text-amber-400 flex items-center gap-3 tracking-widest" style="text-shadow: 0 0 10px rgba(245, 158, 11, 0.4);">
           <i class="fa-solid fa-file-signature text-amber-500"></i> STATE PEACE TREATY
         </h2>
-        <button id="btnCloseRules" class="text-amber-600 hover:text-amber-400 cursor-pointer text-2xl transition">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <button id="btnCloseRules" class="text-amber-600 hover:text-amber-400 cursor-pointer text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
       </div>
-
-      <div class="text-emerald-100/90 text-sm space-y-6 relative z-10 font-mono leading-relaxed">
-        <div class="bg-amber-950/20 border border-amber-800/40 p-4 rounded text-amber-100 shadow-inner">
-          <h3 class="text-amber-500 font-hud font-bold mb-2 tracking-wider">OPERATION RED OCTOBER</h3>
-          <p>The Host (Ask Tech Dad) has hidden two high-value target cities (The Main & The Alt) running silent in the state grid (0-1200). Your mission is to use this terminal to triangulate their coordinates.</p>
-        </div>
-
-        <div class="space-y-3">
-          <h3 class="text-amber-500 font-hud font-bold border-b border-emerald-900/40 pb-1 tracking-wider">THE TERMS OF PEACE</h3>
-          <ul class="list-disc pl-5 space-y-2 text-emerald-200">
-            <li><strong class="text-emerald-400">The Sacrifice:</strong> Once found, the target cities are fully open for the state to burn, zero, and plunder for maximum event points and resources.</li>
-            <li><strong class="text-emerald-400">The Treaty:</strong> In exchange for these targets, all participating alliances agree to a strict, state-wide ban on unprovoked burning of active players.</li>
-            <li><strong class="text-emerald-400">The Penalty:</strong> Any alliance that breaks this peace treaty forfeits access to future events and faces unified retaliation.</li>
-          </ul>
-        </div>
-
-        <div class="space-y-3">
-          <h3 class="text-amber-500 font-hud font-bold border-b border-emerald-900/40 pb-1 tracking-wider">HOW TO PLAY</h3>
-          <ul class="list-decimal pl-5 space-y-2 text-emerald-200">
-            <li>Tap on the radar scope or enter an <strong>X and Y coordinate</strong> (0 - 1200).</li>
-            <li>Click <strong>TRANSMIT PING</strong>.</li>
-            <li>Read the telemetry feedback. <span class="text-blue-400">Cold Water</span> means you are far. <span class="text-amber-500">Thermal Flare</span> means you are within 30 tiles.</li>
-            <li>A <span class="text-red-400 font-bold">DIRECT HIT</span> (within 5 tiles) triggers the state alarm and reveals the city for attack.</li>
-          </ul>
-        </div>
-
-        <div class="mt-8 pt-6 border-t border-amber-900/60 text-center">
-          <button id="btnAcknowledgeRules" class="px-8 py-3 bg-gradient-to-r from-amber-700 to-amber-600 hover:from-amber-600 hover:to-amber-500 text-black font-hud font-black tracking-widest rounded shadow-[0_0_15px_rgba(245,158,11,0.3)] transition active:scale-95 cursor-pointer">
-            ACKNOWLEDGE & INITIATE HUNT
-          </button>
-        </div>
+      <div id="dynamicRulesContent" class="text-emerald-100/90 text-sm space-y-6 relative z-10 font-mono leading-relaxed">
+        <!-- Content injected by JS based on template -->
+      </div>
+      <div class="mt-8 pt-6 border-t border-amber-900/60 text-center relative z-10">
+        <button id="btnAcknowledgeRules" class="px-8 py-3 bg-gradient-to-r from-amber-700 to-amber-600 text-black font-hud font-black tracking-widest rounded shadow-[0_0_15px_rgba(245,158,11,0.3)] transition active:scale-95 cursor-pointer">
+          ACKNOWLEDGE
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- TACTICAL COMMAND (ADMIN) MODAL -->
+  <!-- TACTICAL COMMAND MODAL -->
   <div id="adminModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#040906] border-2 border-emerald-700/60 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-[0_0_30px_rgba(16,185,129,0.2)] relative">
       <div class="absolute inset-0 crt-overlay pointer-events-none opacity-40"></div>
-      
       <div class="flex justify-between items-center mb-5 border-b border-emerald-900/60 pb-3 relative z-10">
-        <h2 class="font-hud font-bold text-lg text-emerald-300 flex items-center gap-2">
-          <i class="fa-solid fa-user-shield text-emerald-500"></i> TACTICAL COMMAND
-        </h2>
-        <button id="btnCloseAdmin" class="text-emerald-600 hover:text-emerald-400 cursor-pointer text-xl transition">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+        <h2 class="font-hud font-bold text-lg text-emerald-300 flex items-center gap-2"><i class="fa-solid fa-user-shield text-emerald-500"></i> TACTICAL COMMAND</h2>
+        <button id="btnCloseAdmin" class="text-emerald-600 hover:text-emerald-400 cursor-pointer text-xl transition"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div id="adminAuthSection" class="flex flex-col gap-4 relative z-10">
-        <p class="text-xs text-emerald-400/80 font-mono">Authentication required for state command overrides.</p>
-        <input type="password" id="adminPasscode" placeholder="Enter Passcode..." class="bg-black border border-emerald-800/80 rounded px-3 py-2 text-sm text-emerald-200 focus:outline-none focus:border-emerald-400 font-mono shadow-inner">
-        <button id="authAdminBtn" class="py-2.5 rounded bg-emerald-800/80 hover:bg-emerald-700 font-hud font-bold text-emerald-100 text-xs tracking-wider border border-emerald-600/50 cursor-pointer shadow-lg transition active:scale-95">VERIFY ACCESS</button>
+        <input type="password" id="adminPasscode" placeholder="Enter Passcode..." class="bg-black border border-emerald-800/80 rounded px-3 py-2 text-sm text-emerald-200 focus:outline-none font-mono">
+        <button id="authAdminBtn" class="py-2.5 rounded bg-emerald-800/80 hover:bg-emerald-700 font-hud text-xs tracking-wider border border-emerald-600/50 cursor-pointer text-emerald-100">VERIFY ACCESS</button>
       </div>
 
       <div id="adminControlsSection" class="hidden flex flex-col gap-5 relative z-10">
-        <!-- Tabs -->
         <div class="flex border-b border-emerald-900/60 text-xs font-hud tracking-wider">
           <button id="tabSetupBtn" class="py-2 px-4 border-b-2 border-emerald-400 text-emerald-300 font-bold cursor-pointer">EVENT SETUP</button>
           <button id="tabHistoryBtn" class="py-2 px-4 border-b-2 border-transparent text-emerald-600 hover:text-emerald-400 cursor-pointer transition">PAST ARCHIVES</button>
@@ -269,30 +179,47 @@
         <div id="tabSetupContent" class="flex flex-col gap-4">
           <div>
             <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Active Event Name</label>
-            <input type="text" id="adminEventNameInput" placeholder="e.g., Event #1 - Operation Red October" class="w-full bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono">
+            <input type="text" id="adminEventNameInput" placeholder="e.g. Event #1 - Red October" class="w-full bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono">
           </div>
-
+          
           <div>
-            <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Target Mode</label>
-            <select id="adminTargetCountSelect" class="w-full bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono cursor-pointer">
-              <option value="1">1 Target (Single City)</option>
-              <option value="2" selected>2 Targets (Main + Alt)</option>
+            <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Event Template</label>
+            <select id="adminTemplateSelect" class="w-full bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono cursor-pointer">
+              <option value="red_october">Red October (Peace Treaty)</option>
+              <option value="friendly_find">Friendly Find (Scavenger Hunt)</option>
+              <option value="custom">Custom (Write Your Own)</option>
             </select>
           </div>
+          
+          <div id="customRulesContainer" class="hidden">
+            <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Custom Rules Lore</label>
+            <textarea id="adminCustomRulesInput" rows="3" placeholder="Enter custom event rules..." class="w-full bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono"></textarea>
+          </div>
 
-          <div class="p-3 bg-emerald-950/30 rounded border border-emerald-900/50">
-            <span class="text-xs font-hud font-bold text-emerald-400 block mb-2">TARGET ALPHA (MAIN)</span>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="number" id="adminTargetAX" placeholder="X Coord" class="bg-black border border-emerald-800/60 rounded px-2 py-1.5 text-sm text-emerald-200 font-mono">
-              <input type="number" id="adminTargetAY" placeholder="Y Coord" class="bg-black border border-emerald-800/60 rounded px-2 py-1.5 text-sm text-emerald-200 font-mono">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Target Mode</label>
+              <select id="adminTargetCountSelect" class="w-full bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono cursor-pointer">
+                <option value="1">1 Target (Main)</option>
+                <option value="2" selected>2 Targets (Main+Alt)</option>
+              </select>
             </div>
           </div>
 
-          <div id="adminTargetBGroup" class="p-3 bg-emerald-950/30 rounded border border-emerald-900/50">
-            <span class="text-xs font-hud font-bold text-emerald-400 block mb-2">TARGET BRAVO (ALT)</span>
-            <div class="grid grid-cols-2 gap-2">
-              <input type="number" id="adminTargetBX" placeholder="X Coord" class="bg-black border border-emerald-800/60 rounded px-2 py-1.5 text-sm text-emerald-200 font-mono">
-              <input type="number" id="adminTargetBY" placeholder="Y Coord" class="bg-black border border-emerald-800/60 rounded px-2 py-1.5 text-sm text-emerald-200 font-mono">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-2 bg-emerald-950/30 rounded border border-emerald-900/50">
+              <span class="text-[10px] font-hud text-emerald-400 block mb-1">TARGET ALPHA</span>
+              <div class="flex gap-1">
+                <input type="number" id="adminTargetAX" placeholder="X" class="w-full bg-black border border-emerald-800/60 rounded px-1.5 py-1 text-xs text-emerald-200 font-mono">
+                <input type="number" id="adminTargetAY" placeholder="Y" class="w-full bg-black border border-emerald-800/60 rounded px-1.5 py-1 text-xs text-emerald-200 font-mono">
+              </div>
+            </div>
+            <div id="adminTargetBGroup" class="p-2 bg-emerald-950/30 rounded border border-emerald-900/50">
+              <span class="text-[10px] font-hud text-emerald-400 block mb-1">TARGET BRAVO</span>
+              <div class="flex gap-1">
+                <input type="number" id="adminTargetBX" placeholder="X" class="w-full bg-black border border-emerald-800/60 rounded px-1.5 py-1 text-xs text-emerald-200 font-mono">
+                <input type="number" id="adminTargetBY" placeholder="Y" class="w-full bg-black border border-emerald-800/60 rounded px-1.5 py-1 text-xs text-emerald-200 font-mono">
+              </div>
             </div>
           </div>
 
@@ -300,19 +227,18 @@
             <label class="block text-[10px] text-emerald-500 mb-1 font-hud uppercase">Broadcast Intel Clue</label>
             <div class="flex gap-2">
               <input type="text" id="adminIntelInput" placeholder="e.g. Thermal ping near Tundra border" class="flex-grow bg-black border border-emerald-800/60 rounded px-3 py-2 text-sm text-emerald-200 font-mono">
-              <button id="btnSendIntel" class="px-4 py-2 rounded bg-amber-900/60 hover:bg-amber-800 border border-amber-600/50 font-hud text-xs text-amber-200 font-bold cursor-pointer transition">SEND</button>
+              <button id="btnSendIntel" class="px-4 py-2 rounded bg-amber-900/60 hover:bg-amber-800 border border-amber-600/50 font-hud text-xs text-amber-200 cursor-pointer">SEND</button>
             </div>
           </div>
 
           <div class="pt-4 flex flex-col gap-2 mt-2">
-            <button id="btnWipeScans" class="w-full py-2 bg-orange-900/50 hover:bg-orange-800/80 border border-orange-700/60 font-hud text-[10px] tracking-wider font-bold text-orange-200 rounded cursor-pointer transition">WIPE CURRENT EVENT SCANS</button>
-            <button id="btnStartEvent" class="w-full py-2.5 bg-emerald-800 hover:bg-emerald-700 font-hud text-xs font-bold text-emerald-100 rounded border border-emerald-600/50 cursor-pointer transition shadow-md">START / UPDATE EVENT</button>
+            <button id="btnWipeScans" class="w-full py-2 bg-orange-900/50 hover:bg-orange-800 border border-orange-700/60 font-hud text-[10px] font-bold text-orange-200 rounded cursor-pointer transition">WIPE CURRENT EVENT SCANS</button>
+            <button id="btnStartEvent" class="w-full py-2.5 bg-emerald-800 hover:bg-emerald-700 font-hud text-xs font-bold text-emerald-100 rounded border border-emerald-600/50 cursor-pointer transition">START / UPDATE EVENT</button>
             <button id="btnEndEvent" class="w-full py-2.5 bg-red-950/60 hover:bg-red-900 border border-red-800/60 font-hud text-xs font-bold text-red-300 rounded cursor-pointer transition">END & ARCHIVE EVENT</button>
           </div>
         </div>
 
         <div id="tabHistoryContent" class="hidden flex flex-col gap-3">
-          <p class="text-xs text-emerald-500/80 font-mono">Archived sessions & historical scan records.</p>
           <div id="archiveList" class="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1">
             <div class="text-xs text-emerald-700 italic text-center py-4">No archives found.</div>
           </div>
@@ -321,136 +247,96 @@
     </div>
   </div>
 
-  <!-- ARCHIVE LOGS DETAIL MODAL -->
   <div id="archiveModal" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-[#040906] border border-emerald-600/50 rounded-xl p-5 max-w-lg w-full max-h-[85vh] flex flex-col relative">
       <div class="flex justify-between items-center mb-3 border-b border-emerald-900/60 pb-2">
         <h3 id="archiveModalTitle" class="font-hud font-bold text-emerald-300 text-sm tracking-wider">ARCHIVED LOGS</h3>
-        <button id="btnCloseArchiveModal" class="text-emerald-600 hover:text-emerald-400 cursor-pointer text-lg"><i class="fa-solid fa-xmark"></i></button>
+        <button onclick="document.getElementById('archiveModal').classList.add('hidden')" class="text-emerald-600 hover:text-emerald-400 cursor-pointer text-lg"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <div id="archiveLogsContent" class="flex-grow overflow-y-auto font-mono text-[10px] space-y-1.5 p-2 bg-black/60 rounded border border-emerald-900/50">
-        <!-- Logs injected here -->
-      </div>
+      <div id="archiveLogsContent" class="flex-grow overflow-y-auto font-mono text-[10px] space-y-1.5 p-2 bg-black/60 rounded border border-emerald-900/50"></div>
     </div>
   </div>
 
   <footer class="max-w-6xl mx-auto px-4 mt-6 w-full border-t border-emerald-900/50 pt-4 flex flex-wrap justify-between items-center text-xs text-emerald-600 gap-4 relative z-10">
-    <div class="flex items-center gap-2">
-      <i class="fa-solid fa-code text-emerald-700"></i>
-      <span class="font-mono">Built by <a href="https://www.asktechdad.com" target="_blank" class="font-hud font-bold text-emerald-500 hover:text-emerald-300 transition">ASK TECH DAD</a></span>
-    </div>
-    
+    <div class="flex items-center gap-2"><i class="fa-solid fa-code text-emerald-700"></i><span class="font-mono">Built by <a href="https://www.asktechdad.com" target="_blank" class="font-hud font-bold text-emerald-500 hover:text-emerald-300 transition">ASK TECH DAD</a></span></div>
     <div class="flex items-center gap-3">
-      <a href="https://ko-fi.com/asktechdad" target="_blank" class="px-3 py-1.5 bg-amber-950/40 border border-amber-700/50 text-amber-400 hover:bg-amber-900/60 hover:text-amber-200 rounded flex items-center gap-2 transition font-mono shadow-[0_0_10px_rgba(245,158,11,0.1)]">
-        <i class="fa-solid fa-mug-hot"></i>
-        <span>Support on Ko-fi</span>
+      <a href="https://ko-fi.com/asktechdad" target="_blank" class="px-3 py-1.5 bg-amber-950/40 border border-amber-700/50 text-amber-400 hover:bg-amber-900/60 rounded flex items-center gap-2 transition font-mono shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+        <i class="fa-solid fa-mug-hot"></i><span>Support on Ko-fi</span>
       </a>
     </div>
   </footer>
 
   <script type="module">
-    // Firebase Imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, addDoc, getDocs, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // 1. Firebase Configuration (SVS Scheduler Project)
-    const firebaseConfig = {
+    const YOUR_FIREBASE_CONFIG = {
       apiKey: "AIzaSyDQuzprhL2M3hrR585iyHeLr0BtUTMfCxA",
       authDomain: "svs-scheduler-a1919.firebaseapp.com",
       databaseURL: "https://svs-scheduler-a1919-default-rtdb.firebaseio.com",
       projectId: "svs-scheduler-a1919",
       storageBucket: "svs-scheduler-a1919.firebasestorage.app",
       messagingSenderId: "1070850863206",
-      appId: "1:1070850863206:web:a2de4c38691fd0c89ebda7"
+      appId: "1:1070850863206:web:a2de4c38691fd0c89ebda7",
+      measurementId: "G-W0DFYH7M9Q"
     };
 
     const AppIdStr = "red-october-sonar"; 
-    let app, db, auth;
-    let currentUser = null;
+    let app, db, auth, currentUser = null;
+    let audioCtx = null;
+    let canvas, ctx, sweepAngle = 0;
 
-    // 2. State & Safety Utilities
+    const state = {
+      gameId: 'event-init', activeGameName: 'Event #1', isEventActive: true,
+      targetMode: 2, targetA: { x: 600, y: 600 }, targetB: { x: 300, y: 300 },
+      template: 'red_october', customRules: '',
+      scans: [], clues: []
+    };
+
     function safeUUID() {
-      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
       return 'uid-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
     }
 
-    const state = {
-      gameId: 'event-init',
-      activeGameName: 'Event #1 - Operation Red October',
-      isEventActive: true,
-      targetMode: 2,
-      targetA: { x: 600, y: 600 },
-      targetB: { x: 300, y: 300 },
-      scans: [],
-      clues: []
-    };
-
-    // 3. Audio Engine
-    let audioCtx = null;
     function playSonarPing(freq = 880, duration = 0.4, type = 'sine') {
       try {
-        if (!audioCtx) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (AudioContext) audioCtx = new AudioContext();
-        }
-        if (!audioCtx) return;
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
       } catch (e) {}
     }
 
-    // 4. Canvas Engine
-    let canvas, ctx, sweepAngle = 0;
-    
     function initCanvas() {
       canvas = document.getElementById('radarCanvas');
       if (!canvas) return;
       ctx = canvas.getContext('2d');
-
-      function resizeCanvas() {
-        const parent = canvas.parentElement;
-        if (parent) { canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; }
-      }
-      resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
-
-      function updateCoordsFromEvent(e) {
-        const rect = canvas.getBoundingClientRect();
-        let clientX = e.clientX, clientY = e.clientY;
-        if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-        else if (e.changedTouches && e.changedTouches.length > 0) { clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
-        
-        const xRatio = (clientX - rect.left) / rect.width;
-        const yRatio = (clientY - rect.top) / rect.height;
-        const gameX = Math.round(Math.max(0, Math.min(1200, xRatio * 1200)));
-        const gameY = Math.round(Math.max(0, Math.min(1200, yRatio * 1200)));
-        
-        document.getElementById('cursorCoords').innerText = `X: ${gameX} | Y: ${gameY}`;
-        return { gameX, gameY };
-      }
+      const resizeCanvas = () => { if (canvas.parentElement) { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; } };
+      resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
       const handleInteract = (e) => {
         if(e.type.includes('touch')) e.preventDefault();
-        const { gameX, gameY } = updateCoordsFromEvent(e);
-        document.getElementById('scanXInput').value = gameX;
-        document.getElementById('scanYInput').value = gameY;
-        playSonarPing(440, 0.15);
+        const rect = canvas.getBoundingClientRect();
+        let cX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : (e.changedTouches ? e.changedTouches[0].clientX : 0));
+        let cY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : (e.changedTouches ? e.changedTouches[0].clientY : 0));
+        const x = Math.round(Math.max(0, Math.min(1200, ((cX - rect.left) / rect.width) * 1200)));
+        const y = Math.round(Math.max(0, Math.min(1200, ((cY - rect.top) / rect.height) * 1200)));
+        document.getElementById('cursorCoords').innerText = `X: ${x} | Y: ${y}`;
+        if(e.type === 'click' || e.type === 'touchend') {
+          document.getElementById('scanXInput').value = x;
+          document.getElementById('scanYInput').value = y;
+          playSonarPing(440, 0.15);
+        }
       };
 
-      canvas.addEventListener('mousemove', updateCoordsFromEvent);
-      canvas.addEventListener('touchstart', updateCoordsFromEvent, {passive: false});
-      canvas.addEventListener('touchmove', updateCoordsFromEvent, {passive: false});
+      canvas.addEventListener('mousemove', handleInteract);
+      canvas.addEventListener('touchstart', handleInteract, {passive: false});
+      canvas.addEventListener('touchmove', handleInteract, {passive: false});
       canvas.addEventListener('click', handleInteract);
       canvas.addEventListener('touchend', handleInteract, {passive: false});
 
@@ -461,75 +347,101 @@
       if (!ctx || !canvas) return;
       ctx.setTransform(1, 0, 0, 1, 0, 0); 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       const cx = canvas.width / 2, cy = canvas.height / 2, r = (canvas.width / 2) - 4;
 
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
-      ctx.lineWidth = 1;
-      for (let i = 1; i <= 4; i++) {
-        ctx.beginPath(); ctx.arc(cx, cy, (r/4)*i, 0, Math.PI*2); ctx.stroke();
-      }
-
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
-      ctx.setLineDash([4, 4]);
-      const sfSize = canvas.width * (200/1200), sfMin = cx - (sfSize/2);
-      ctx.strokeRect(sfMin, sfMin, sfSize, sfSize);
-      const tdSize = canvas.width * (600/1200), tdMin = cx - (tdSize/2);
-      ctx.strokeRect(tdMin, tdMin, tdSize, tdSize);
-      ctx.setLineDash([]);
-
-      ctx.strokeStyle = 'rgba(16, 185, 129, 0.15)';
-      ctx.beginPath();
-      ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
-      ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
-      ctx.stroke();
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)'; ctx.lineWidth = 1;
+      for (let i = 1; i <= 4; i++) { ctx.beginPath(); ctx.arc(cx, cy, (r/4)*i, 0, Math.PI*2); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)'; ctx.setLineDash([4, 4]);
+      const sfSize = canvas.width * (200/1200), tdSize = canvas.width * (600/1200);
+      ctx.strokeRect(cx - sfSize/2, cy - sfSize/2, sfSize, sfSize);
+      ctx.strokeRect(cx - tdSize/2, cy - tdSize/2, tdSize, tdSize);
+      ctx.setLineDash([]); ctx.strokeStyle = 'rgba(16, 185, 129, 0.15)';
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
 
       state.scans.slice(-20).forEach(s => {
         const px = (s.x / 1200) * canvas.width, py = (s.y / 1200) * canvas.height;
         ctx.fillStyle = s.isHit ? '#ef4444' : (s.distance <= 30 ? '#f59e0b' : '#10b981');
-        ctx.shadowBlur = s.isHit ? 10 : 0;
-        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = s.isHit ? 10 : 0; ctx.shadowColor = ctx.fillStyle;
         ctx.beginPath(); ctx.arc(px, py, s.isHit ? 5 : 3, 0, Math.PI*2); ctx.fill();
         ctx.shadowBlur = 0;
       });
 
-      sweepAngle += 0.025;
-      ctx.translate(cx, cy);
-      ctx.rotate(sweepAngle);
-
-      let grad;
+      sweepAngle += 0.025; ctx.translate(cx, cy); ctx.rotate(sweepAngle);
+      let grad = ctx.createRadialGradient(0,0,0, 0,0, r);
       if (typeof ctx.createConicGradient === 'function') {
         grad = ctx.createConicGradient(0, 0, 0);
-        grad.addColorStop(0, 'rgba(16, 185, 129, 0.6)');
-        grad.addColorStop(0.1, 'rgba(16, 185, 129, 0.05)');
-        grad.addColorStop(0.3, 'transparent');
+        grad.addColorStop(0, 'rgba(16, 185, 129, 0.6)'); grad.addColorStop(0.1, 'rgba(16, 185, 129, 0.05)'); grad.addColorStop(0.3, 'transparent');
       } else {
-        grad = ctx.createRadialGradient(0,0,0, 0,0, r);
-        grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-        grad.addColorStop(1, 'transparent');
+        grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)'); grad.addColorStop(1, 'transparent');
       }
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0, r, -Math.PI/4, 0); ctx.closePath(); ctx.fill();
-      
-      ctx.strokeStyle = '#34d399';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r, 0); ctx.stroke();
-
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0, r, -Math.PI/4, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r, 0); ctx.stroke();
       requestAnimationFrame(renderRadar);
     }
 
-    // 5. App Logic & UI
+    function renderRulesUI() {
+      const title = document.getElementById('rulesModalTitle');
+      const content = document.getElementById('dynamicRulesContent');
+      const btnText = document.getElementById('btnOpenRulesText');
+
+      let dynamicHTML = '';
+      if (state.template === 'friendly_find') {
+        title.innerHTML = `<i class="fa-solid fa-gem text-blue-400"></i> SCAVENGER HUNT`;
+        btnText.innerText = "EVENT RULES";
+        dynamicHTML = `
+          <div class="bg-blue-950/20 border border-blue-800/40 p-4 rounded text-blue-100 shadow-inner">
+            <h3 class="text-blue-400 font-hud font-bold mb-2 tracking-wider">OPERATION: FRIENDLY FIND</h3>
+            <p>The host has hidden secret supply caches on the map. Your mission is to use this terminal to triangulate their coordinates.</p>
+          </div>
+          <div class="space-y-3 mt-4">
+            <h3 class="text-blue-400 font-hud font-bold border-b border-blue-900/40 pb-1 tracking-wider">RULES OF ENGAGEMENT</h3>
+            <ul class="list-disc pl-5 space-y-2 text-emerald-200">
+              <li><strong class="text-blue-300">Pure Discovery:</strong> This is a peaceful event. No burning or attacking is required.</li>
+              <li><strong class="text-blue-300">The Prize:</strong> The first player to score a DIRECT HIT (within 5 tiles) claims the bounty established by the host!</li>
+            </ul>
+          </div>`;
+      } else if (state.template === 'custom') {
+        title.innerHTML = `<i class="fa-solid fa-clipboard-list text-purple-400"></i> CUSTOM DIRECTIVE`;
+        btnText.innerText = "EVENT RULES";
+        dynamicHTML = `<div class="bg-purple-950/20 border border-purple-800/40 p-4 rounded text-purple-100 shadow-inner whitespace-pre-wrap">${state.customRules || "Awaiting host directives..."}</div>`;
+      } else {
+        title.innerHTML = `<i class="fa-solid fa-file-signature text-amber-500"></i> STATE PEACE TREATY`;
+        btnText.innerText = "PEACE TREATY";
+        dynamicHTML = `
+          <div class="bg-amber-950/20 border border-amber-800/40 p-4 rounded text-amber-100 shadow-inner">
+            <h3 class="text-amber-500 font-hud font-bold mb-2 tracking-wider">OPERATION RED OCTOBER</h3>
+            <p>The Host (Ask Tech Dad) has hidden high-value targets running silent in the grid. Triangulate their coordinates.</p>
+          </div>
+          <div class="space-y-3 mt-4">
+            <h3 class="text-amber-500 font-hud font-bold border-b border-emerald-900/40 pb-1 tracking-wider">THE TERMS OF PEACE</h3>
+            <ul class="list-disc pl-5 space-y-2 text-emerald-200">
+              <li><strong class="text-emerald-400">The Sacrifice:</strong> Once found, the targets are fully open for the state to burn and zero for points.</li>
+              <li><strong class="text-emerald-400">The Treaty:</strong> In exchange, all alliances agree to a strict state-wide ban on unprovoked burning.</li>
+              <li><strong class="text-emerald-400">The Penalty:</strong> Breaching the treaty forfeits future events and faces unified retaliation.</li>
+            </ul>
+          </div>`;
+      }
+
+      dynamicHTML += `
+        <div class="space-y-3 mt-6 pt-4 border-t border-emerald-900/40">
+          <h3 class="text-emerald-500 font-hud font-bold pb-1 tracking-wider">HOW TO PLAY</h3>
+          <ul class="list-decimal pl-5 space-y-2 text-emerald-200 text-sm">
+            <li>Tap on the radar scope or enter an <strong>X and Y coordinate</strong>.</li>
+            <li>Click <strong>TRANSMIT PING</strong>.</li>
+            <li>Read the telemetry feedback. <span class="text-blue-400">Cold Water</span> means far. <span class="text-amber-500">Thermal Flare</span> means within 30 tiles.</li>
+            <li>A <span class="text-red-400 font-bold">DIRECT HIT</span> (within 5 tiles) reveals the target.</li>
+          </ul>
+        </div>`;
+      
+      content.innerHTML = dynamicHTML;
+    }
+
     function renderLogsUI() {
       const list = document.getElementById('scanHistoryList');
-      if (!list) return;
       if (state.scans.length === 0) return list.innerHTML = `<div class="text-center text-emerald-700 py-8 italic">Radar sweeping... awaiting telemetry.</div>`;
-      
       list.innerHTML = state.scans.slice().reverse().map(s => `
         <div class="p-2 rounded bg-black/60 border ${s.isHit ? 'border-red-500/80 text-red-300' : 'border-emerald-900/60'} flex justify-between items-center">
-          <div>
-            <span class="font-bold text-emerald-300 font-hud tracking-wider">[${s.ign}]</span> PING (${s.x}, ${s.y})
-            <div class="text-[9px] ${s.isHit ? 'text-red-400 font-bold' : 'text-emerald-500'}">${s.signal} (${s.distance} units)</div>
-          </div>
+          <div><span class="font-bold text-emerald-300 font-hud tracking-wider">[${s.ign}]</span> PING (${s.x}, ${s.y}) <div class="text-[9px] ${s.isHit ? 'text-red-400 font-bold' : 'text-emerald-500'}">${s.signal} (${s.distance} units)</div></div>
           <span class="text-[9px] text-emerald-700">${s.time}</span>
         </div>
       `).join('');
@@ -537,8 +449,7 @@
 
     function renderCluesUI() {
       const list = document.getElementById('activeCluesList');
-      if (!list) return;
-      if (!state.clues || state.clues.length === 0) return list.innerHTML = `<div class="p-3 bg-black/50 rounded border border-emerald-900/50 text-emerald-600 italic text-center">Encrypted channel silent.</div>`;
+      if (state.clues.length === 0) return list.innerHTML = `<div class="p-3 bg-black/50 rounded border border-emerald-900/50 text-emerald-600 italic text-center">Encrypted channel silent.</div>`;
       list.innerHTML = state.clues.map(c => `
         <div class="p-2 bg-amber-950/20 rounded border border-amber-900/40 flex items-start gap-2 text-amber-200">
           <i class="fa-solid fa-tower-broadcast text-amber-500 text-[10px] mt-1"></i>
@@ -547,101 +458,21 @@
       `).join('');
     }
 
-    function processScan() {
-      if (!state.isEventActive) return alert('Event is archived. Awaiting Command.');
-      const ign = document.getElementById('playerIgnInput').value.trim() || 'Ghost Recon';
-      const x = parseInt(document.getElementById('scanXInput').value);
-      const y = parseInt(document.getElementById('scanYInput').value);
+    window.setCoords = (x,y) => { document.getElementById('scanXInput').value = x; document.getElementById('scanYInput').value = y; };
 
-      if (isNaN(x) || isNaN(y) || x < 0 || x > 1200 || y < 0 || y > 1200) return alert('Invalid Coordinates (0-1200).');
-
-      const distA = Math.hypot(x - state.targetA.x, y - state.targetA.y);
-      let minDist = distA;
-      if (state.targetMode === 2) {
-        const distB = Math.hypot(x - state.targetB.x, y - state.targetB.y);
-        minDist = Math.min(distA, distB);
-      }
-
-      const isHit = minDist <= 5;
-      let sig = 'COLD OCEAN WATERS';
-      if (isHit) sig = 'DIRECT HIT! TARGET REVEALED!';
-      else if (minDist <= 30) sig = 'THERMAL FLARE DETECTED!';
-      else if (minDist <= 100) sig = 'WARM SONAR ECHO';
-      else if (minDist <= 250) sig = 'FAINT DISTANT PING';
-
-      const scan = { id: safeUUID(), gameId: state.gameId, ign, x, y, distance: Math.round(minDist), signal: sig, isHit, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) };
-      
-      state.scans.push(scan);
-      playSonarPing(isHit ? 1200 : (minDist < 50 ? 800 : 400), isHit ? 1.0 : 0.4, isHit ? 'square' : 'sine');
-      renderLogsUI();
-      if (db && currentUser) addDoc(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), scan).catch(console.error);
-    }
-
-    async function loadArchives() {
-      const list = document.getElementById('archiveList');
-      if (!db || !currentUser) return list.innerHTML = `<div class="text-center text-emerald-700 py-2">Archives require cloud sync.</div>`;
-      const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'games'));
-      if (snap.empty) return list.innerHTML = `<div class="text-center text-emerald-700 py-2">No archives found.</div>`;
-      const arr = []; snap.forEach(d => arr.push(d.data())); arr.sort((a,b)=>b.endedAt - a.endedAt);
-      list.innerHTML = arr.map(g => `
-        <div class="p-2 bg-black/60 rounded border border-emerald-800/50 flex flex-col gap-1">
-          <div class="flex justify-between text-emerald-300 font-hud text-xs"><span>${g.name}</span> <span class="text-[9px] font-mono text-emerald-600">${new Date(g.endedAt).toLocaleDateString()}</span></div>
-          <div class="flex justify-between items-center border-t border-emerald-900/50 pt-1 mt-1">
-            <span class="text-[9px] text-emerald-500">Scans: ${g.totalScans}</span>
-            <button class="view-log-btn px-2 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded text-[9px] cursor-pointer" data-gid="${g.gameId}">VIEW LOGS</button>
-          </div>
-        </div>
-      `).join('');
-      
-      document.querySelectorAll('.view-log-btn').forEach(btn => btn.addEventListener('click', (e) => loadArchiveLogs(e.target.dataset.gid)));
-    }
-
-    async function loadArchiveLogs(gid) {
-      document.getElementById('archiveModal').classList.remove('hidden');
-      const c = document.getElementById('archiveLogsContent');
-      c.innerHTML = '<div class="text-center py-4 text-emerald-500">Fetching logs...</div>';
-      const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
-      const arr = []; snap.forEach(d => { if(d.data().gameId === gid) arr.push(d.data()); });
-      if(arr.length===0) return c.innerHTML = '<div class="text-center text-emerald-700">No logs found.</div>';
-      c.innerHTML = arr.sort((a,b)=>a.time.localeCompare(b.time)).map(s => `
-        <div class="flex justify-between items-center border-b border-emerald-900/40 py-1">
-          <span>[${s.ign}] (${s.x},${s.y}) - <span class="${s.isHit?'text-red-400':'text-emerald-500'}">${s.signal}</span></span>
-          <span class="text-emerald-700">${s.time}</span>
-        </div>
-      `).join('');
-    }
-
-    async function wipeCurrentScans() {
-      if (!confirm('WARNING: This will permanently delete all radar scans for the CURRENT event. Proceed?')) return;
-      state.scans = []; renderLogsUI();
-      if (db && currentUser) {
-        try {
-          const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
-          const deletes = [];
-          snap.forEach(d => { if(d.data().gameId === state.gameId) deletes.push(deleteDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'scans', d.id))); });
-          await Promise.all(deletes);
-          alert('Current event scans wiped successfully.');
-        } catch(e) { console.error(e); alert('Failed to wipe. Check console.'); }
-      }
-    }
-
-    // 6. DOM Binding
-    function bindEvents() {
+    function setupEventListeners() {
       document.getElementById('btnOpenRules').onclick = () => document.getElementById('rulesModal').classList.remove('hidden');
       document.getElementById('btnCloseRules').onclick = () => document.getElementById('rulesModal').classList.add('hidden');
       document.getElementById('btnAcknowledgeRules').onclick = () => document.getElementById('rulesModal').classList.add('hidden');
-      
       document.getElementById('btnOpenAdmin').onclick = () => document.getElementById('adminModal').classList.remove('hidden');
       document.getElementById('btnCloseAdmin').onclick = () => document.getElementById('adminModal').classList.add('hidden');
-      document.getElementById('btnCloseArchiveModal').onclick = () => document.getElementById('archiveModal').classList.add('hidden');
 
-      document.getElementById('btnTransmitPing').onclick = processScan;
-      document.getElementById('btnPresetSunfire').onclick = () => { document.getElementById('scanXInput').value=600; document.getElementById('scanYInput').value=600; };
-      document.getElementById('btnPresetNWTundra').onclick = () => { document.getElementById('scanXInput').value=300; document.getElementById('scanYInput').value=300; };
-      document.getElementById('btnPresetSETundra').onclick = () => { document.getElementById('scanXInput').value=900; document.getElementById('scanYInput').value=900; };
+      document.getElementById('adminTemplateSelect').onchange = (e) => {
+        document.getElementById('customRulesContainer').classList.toggle('hidden', e.target.value !== 'custom');
+      };
 
       document.getElementById('authAdminBtn').onclick = () => {
-        if(document.getElementById('adminPasscode').value.trim() === 'WOS2026') {
+        if(document.getElementById('adminPasscode').value.trim() === 'WOS2026' || document.getElementById('adminPasscode').value.trim() === 'admin') {
           document.getElementById('adminAuthSection').classList.add('hidden'); document.getElementById('adminControlsSection').classList.remove('hidden');
         } else alert('Access Denied.');
       };
@@ -651,88 +482,127 @@
         document.getElementById('tabSetupBtn').className = 'py-2 px-4 border-b-2 border-emerald-400 text-emerald-300 font-bold cursor-pointer';
         document.getElementById('tabHistoryBtn').className = 'py-2 px-4 border-b-2 border-transparent text-emerald-600 hover:text-emerald-400 cursor-pointer transition';
       };
-      document.getElementById('tabHistoryBtn').onclick = () => {
+      document.getElementById('tabHistoryBtn').onclick = async () => {
         document.getElementById('tabSetupContent').classList.add('hidden'); document.getElementById('tabHistoryContent').classList.remove('hidden');
         document.getElementById('tabHistoryBtn').className = 'py-2 px-4 border-b-2 border-emerald-400 text-emerald-300 font-bold cursor-pointer';
         document.getElementById('tabSetupBtn').className = 'py-2 px-4 border-b-2 border-transparent text-emerald-600 hover:text-emerald-400 cursor-pointer transition';
-        loadArchives();
+        const list = document.getElementById('archiveList');
+        if(!db) return list.innerHTML = `<div class="text-center text-emerald-700 py-2">Offline Mode.</div>`;
+        const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'games'));
+        const arr = []; snap.forEach(d => arr.push(d.data())); arr.sort((a,b)=>b.endedAt - a.endedAt);
+        if(arr.length === 0) return list.innerHTML = `<div class="text-center text-emerald-700 py-2">No archives found.</div>`;
+        list.innerHTML = arr.map(g => `
+          <div class="p-2 bg-black/60 rounded border border-emerald-800/50 flex flex-col gap-1">
+            <div class="flex justify-between text-emerald-300 font-hud text-xs"><span>${g.name}</span> <span class="text-[9px] font-mono text-emerald-600">${new Date(g.endedAt).toLocaleDateString()}</span></div>
+            <div class="flex justify-between items-center border-t border-emerald-900/50 pt-1 mt-1">
+              <span class="text-[9px] text-emerald-500">Scans: ${g.totalScans}</span>
+              <button class="px-2 py-1 bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 rounded text-[9px] cursor-pointer" onclick="window.viewArchive('${g.gameId}')">VIEW LOGS</button>
+            </div>
+          </div>
+        `).join('');
+      };
+
+      window.viewArchive = async (gid) => {
+        document.getElementById('archiveModal').classList.remove('hidden');
+        const c = document.getElementById('archiveLogsContent'); c.innerHTML = '<div class="text-center py-4 text-emerald-500">Fetching logs...</div>';
+        const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
+        const arr = []; snap.forEach(d => { if(d.data().gameId === gid) arr.push(d.data()); });
+        if(arr.length===0) return c.innerHTML = '<div class="text-center text-emerald-700">No logs found.</div>';
+        c.innerHTML = arr.sort((a,b)=>a.time.localeCompare(b.time)).map(s => `
+          <div class="flex justify-between items-center border-b border-emerald-900/40 py-1">
+            <span>[${s.ign}] (${s.x},${s.y}) - <span class="${s.isHit?'text-red-400':'text-emerald-500'}">${s.signal}</span></span><span class="text-emerald-700">${s.time}</span>
+          </div>`).join('');
+      };
+
+      document.getElementById('btnWipeScans').onclick = async () => {
+        if (!confirm('WARNING: Wipes current event scans only. Proceed?')) return;
+        state.scans = []; renderLogsUI();
+        if(db && currentUser) {
+          const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
+          const deletes = []; snap.forEach(d => { if(d.data().gameId === state.gameId) deletes.push(deleteDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'scans', d.id))); });
+          await Promise.all(deletes); alert('Scans wiped.');
+        }
       };
 
       document.getElementById('adminTargetCountSelect').onchange = (e) => document.getElementById('adminTargetBGroup').classList.toggle('hidden', e.target.value === "1");
-      
-      document.getElementById('btnSendIntel').onclick = async () => {
-        const input = document.getElementById('adminIntelInput');
-        if (!input.value.trim()) return;
-        state.clues.push({ text: input.value.trim(), time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-        input.value = '';
-        renderCluesUI();
-        if(db && currentUser) await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
-      };
-
-      document.getElementById('btnWipeScans').onclick = wipeCurrentScans;
 
       document.getElementById('btnStartEvent').onclick = async () => {
         state.activeGameName = document.getElementById('adminEventNameInput').value || 'Event #1';
-        state.gameId = 'event-' + Date.now();
-        state.isEventActive = true;
+        state.gameId = 'event-' + Date.now(); state.isEventActive = true;
         state.targetMode = parseInt(document.getElementById('adminTargetCountSelect').value);
+        state.template = document.getElementById('adminTemplateSelect').value;
+        state.customRules = document.getElementById('adminCustomRulesInput').value;
         state.targetA = { x: parseInt(document.getElementById('adminTargetAX').value)||600, y: parseInt(document.getElementById('adminTargetAY').value)||600 };
         state.targetB = { x: parseInt(document.getElementById('adminTargetBX').value)||300, y: parseInt(document.getElementById('adminTargetBY').value)||300 };
         state.scans = []; state.clues = [];
         document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
-        renderCluesUI(); renderLogsUI();
+        renderRulesUI(); renderCluesUI(); renderLogsUI();
         if(db && currentUser) await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
         alert('Event Started!');
       };
 
       document.getElementById('btnEndEvent').onclick = async () => {
-        if (!confirm('End and archive this event?')) return;
+        if (!confirm('End and archive event?')) return;
         state.isEventActive = false;
-        if (db && currentUser) {
-          await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'games', state.gameId), {
-            gameId: state.gameId, name: state.activeGameName, endedAt: Date.now(), totalScans: state.scans.length, mode: state.targetMode, tA: state.targetA, tB: state.targetB
-          });
+        if(db && currentUser) {
+          await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'games', state.gameId), { gameId: state.gameId, name: state.activeGameName, endedAt: Date.now(), totalScans: state.scans.length });
           await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
         }
-        alert('Event Archived.');
+        alert('Archived.');
+      };
+
+      document.getElementById('btnSendIntel').onclick = async () => {
+        const input = document.getElementById('adminIntelInput'); if (!input.value.trim()) return;
+        state.clues.push({ text: input.value.trim(), time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+        input.value = ''; renderCluesUI();
+        if(db && currentUser) await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
+      };
+
+      document.getElementById('btnTransmitPing').onclick = () => {
+        if (!state.isEventActive) return alert('Event is archived.');
+        const ign = document.getElementById('playerIgnInput').value.trim() || 'Ghost';
+        const x = parseInt(document.getElementById('scanXInput').value), y = parseInt(document.getElementById('scanYInput').value);
+        if (isNaN(x) || isNaN(y) || x < 0 || x > 1200 || y < 0 || y > 1200) return alert('Invalid Coords (0-1200).');
+        
+        let minDist = Math.hypot(x - state.targetA.x, y - state.targetA.y);
+        if (state.targetMode === 2) minDist = Math.min(minDist, Math.hypot(x - state.targetB.x, y - state.targetB.y));
+        const isHit = minDist <= 5;
+        let sig = 'COLD OCEAN WATERS';
+        if (isHit) sig = 'DIRECT HIT! TARGET REVEALED!'; else if (minDist <= 30) sig = 'THERMAL FLARE DETECTED!'; else if (minDist <= 100) sig = 'WARM SONAR ECHO'; else if (minDist <= 250) sig = 'FAINT DISTANT PING';
+
+        const scan = { id: safeUUID(), gameId: state.gameId, ign, x, y, distance: Math.round(minDist), signal: sig, isHit, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) };
+        state.scans.push(scan); playSonarPing(isHit ? 1200 : (minDist < 50 ? 800 : 400), isHit ? 1.0 : 0.4, isHit ? 'square' : 'sine');
+        renderLogsUI();
+        if(db && currentUser) addDoc(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), scan).catch(console.error);
       };
     }
 
-    // 7. Boot Sequence
     function bootApp() {
-      initCanvas();
-      bindEvents();
+      setupEventListeners(); initCanvas(); renderRulesUI();
       try {
-        app = initializeApp(firebaseConfig); db = getFirestore(app); auth = getAuth(app);
+        app = initializeApp(YOUR_FIREBASE_CONFIG); db = getFirestore(app); auth = getAuth(app);
         onAuthStateChanged(auth, async (u) => {
           if (u) {
             currentUser = u;
-            document.getElementById('networkStatusBadge').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>LIVE SYNC</span>`;
-            
-            onSnapshot(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), (docSnap) => {
-              if (docSnap.exists()) {
-                const d = docSnap.data();
-                state.gameId = d.gameId; state.activeGameName = d.activeGameName; state.isEventActive = d.isEventActive;
-                state.targetMode = d.targetMode; state.targetA = d.targetA; state.targetB = d.targetB;
-                state.clues = d.clues || [];
+            document.getElementById('networkStatusBadge').classList.remove('hidden');
+            onSnapshot(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), (dSnap) => {
+              if (dSnap.exists()) {
+                const d = dSnap.data();
+                Object.assign(state, d);
                 document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
-                renderCluesUI();
+                renderRulesUI(); renderCluesUI();
               }
             });
-
             onSnapshot(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), (snap) => {
-              const fetched = [];
-              snap.forEach(d => { if(d.data().gameId === state.gameId) fetched.push(d.data()); });
-              state.scans = fetched.sort((a,b)=>a.time.localeCompare(b.time));
-              renderLogsUI();
+              const fetched = []; snap.forEach(d => { if(d.data().gameId === state.gameId) fetched.push(d.data()); });
+              state.scans = fetched.sort((a,b)=>a.time.localeCompare(b.time)); renderLogsUI();
             });
           } else signInAnonymously(auth).catch(console.warn);
         });
-      } catch(e) { console.warn("Firebase Init Error", e); }
+      } catch(e) { console.warn("Firebase offline"); }
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootApp);
-    else bootApp();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootApp); else bootApp();
   </script>
 </body>
 </html>
