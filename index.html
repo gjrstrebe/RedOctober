@@ -84,7 +84,7 @@
         </div>
         <div class="w-full mt-6 flex flex-wrap justify-center gap-2 text-[10px] font-mono relative z-20">
           <button onclick="window.setCoords(600,600)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">SUNFIRE (600,600)</button>
-          <button onclick="window.setCoords(300,300)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">NW TUNDRA (300,300)</button>
+          <button onclick="window.setCoords(43,144)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">NW CORNER (43,144)</button>
           <button onclick="window.setCoords(900,900)" class="px-3 py-1.5 rounded bg-black/60 border border-emerald-800/80 hover:border-emerald-400 text-emerald-400 transition hover:bg-emerald-900/50">SE TUNDRA (900,900)</button>
         </div>
       </div>
@@ -287,6 +287,9 @@
     let canvas, ctx, sweepAngle = 0;
     let unsubscribeScans = null;
 
+    // Diagonal max distance from center (600,600) to corner (0,0) is sqrt(600^2 + 600^2) = ~848.53
+    const MAP_MAX_RADIUS = 848.53;
+
     const state = {
       gameId: 'event-init', activeGameName: 'Awaiting Event...', isEventActive: true,
       targetMode: 2, targetA: { x: 600, y: 600 }, targetB: { x: 300, y: 300 },
@@ -313,8 +316,9 @@
       ctx = canvas.getContext('2d');
       const resizeCanvas = () => { 
         if (canvas.parentElement) { 
-          canvas.width = canvas.parentElement.clientWidth; 
-          canvas.height = canvas.parentElement.clientHeight; 
+          const rect = canvas.parentElement.getBoundingClientRect();
+          canvas.width = rect.width; 
+          canvas.height = rect.height; 
         } 
       };
       resizeCanvas(); 
@@ -326,14 +330,30 @@
         let cX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : (e.changedTouches ? e.changedTouches[0].clientX : 0));
         let cY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : (e.changedTouches ? e.changedTouches[0].clientY : 0));
         
-        // Map click precisely to 0-1200 grid
-        const x = Math.round(Math.max(0, Math.min(1200, ((cX - rect.left) / rect.width) * 1200)));
-        const y = Math.round(Math.max(0, Math.min(1200, ((cY - rect.top) / rect.height) * 1200)));
+        const relX = cX - rect.left;
+        const relY = cY - rect.top;
+        const width = rect.width;
+        const height = rect.height;
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxR = Math.min(cx, cy) - 2;
+        const scale = maxR / MAP_MAX_RADIUS;
+
+        // Calculate offset in pixel space from center
+        const dx = relX - cx;
+        const dy = relY - cy;
+
+        // Convert back to 0-1200 coordinate space
+        const x = Math.round(600 + (dx / scale));
+        const y = Math.round(600 + (dy / scale));
         
-        document.getElementById('cursorCoords').innerText = `X: ${x} | Y: ${y}`;
+        const clampedX = Math.max(0, Math.min(1200, x));
+        const clampedY = Math.max(0, Math.min(1200, y));
+
+        document.getElementById('cursorCoords').innerText = `X: ${clampedX} | Y: ${clampedY}`;
         if(e.type === 'click' || e.type === 'touchend') {
-          document.getElementById('scanXInput').value = x;
-          document.getElementById('scanYInput').value = y;
+          document.getElementById('scanXInput').value = clampedX;
+          document.getElementById('scanYInput').value = clampedY;
           playSonarPing(440, 0.15);
         }
       };
@@ -351,21 +371,24 @@
       if (!ctx || !canvas) return;
       ctx.setTransform(1, 0, 0, 1, 0, 0); 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const cx = canvas.width / 2, cy = canvas.height / 2, r = (canvas.width / 2) - 4;
+      const cx = canvas.width / 2, cy = canvas.height / 2, maxR = Math.min(cx, cy) - 2;
+      const scale = maxR / MAP_MAX_RADIUS;
 
       ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)'; ctx.lineWidth = 1;
-      for (let i = 1; i <= 4; i++) { ctx.beginPath(); ctx.arc(cx, cy, (r/4)*i, 0, Math.PI*2); ctx.stroke(); }
+      for (let i = 1; i <= 4; i++) { ctx.beginPath(); ctx.arc(cx, cy, (maxR/4)*i, 0, Math.PI*2); ctx.stroke(); }
+      
+      // Draw 1200x1200 grid bounding box mapped cleanly inside circle space
       ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)'; ctx.setLineDash([4, 4]);
-      const sfSize = canvas.width * (200/1200), tdSize = canvas.width * (600/1200);
-      ctx.strokeRect(cx - sfSize/2, cy - sfSize/2, sfSize, sfSize);
-      ctx.strokeRect(cx - tdSize/2, cy - tdSize/2, tdSize, tdSize);
+      const boxWidth = 1200 * scale;
+      ctx.strokeRect(cx - (600 * scale), cy - (600 * scale), boxWidth, boxWidth);
       ctx.setLineDash([]); ctx.strokeStyle = 'rgba(16, 185, 129, 0.15)';
       ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
 
-      // Plot scans using absolute 0-1200 mapping onto canvas width/height
+      // Plot scans mapped cleanly using scale
       state.scans.slice(-30).forEach(s => {
-        const px = (s.x / 1200) * canvas.width;
-        const py = (s.y / 1200) * canvas.height;
+        const px = cx + (s.x - 600) * scale;
+        const py = cy + (s.y - 600) * scale;
+        
         ctx.fillStyle = s.isHit ? '#ef4444' : (s.distance <= 30 ? '#f59e0b' : '#10b981');
         ctx.shadowBlur = s.isHit ? 12 : 0; 
         ctx.shadowColor = ctx.fillStyle;
@@ -376,15 +399,15 @@
       });
 
       sweepAngle += 0.025; ctx.translate(cx, cy); ctx.rotate(sweepAngle);
-      let grad = ctx.createRadialGradient(0,0,0, 0,0, r);
+      let grad = ctx.createRadialGradient(0,0,0, 0,0, maxR);
       if (typeof ctx.createConicGradient === 'function') {
         grad = ctx.createConicGradient(0, 0, 0);
         grad.addColorStop(0, 'rgba(16, 185, 129, 0.6)'); grad.addColorStop(0.1, 'rgba(16, 185, 129, 0.05)'); grad.addColorStop(0.3, 'transparent');
       } else {
         grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)'); grad.addColorStop(1, 'transparent');
       }
-      ctx.fillStyle = grad; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0, r, -Math.PI/4, 0); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(r, 0); ctx.stroke();
+      ctx.fillStyle = grad; ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0, maxR, -Math.PI/4, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(maxR, 0); ctx.stroke();
       requestAnimationFrame(renderRadar);
     }
 
@@ -638,7 +661,6 @@
             document.getElementById('networkText').innerText = "LIVE SYNC";
             document.getElementById('networkDot').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
             
-            // Listen to game config state
             onSnapshot(doc(db, 'gameState', 'config'), (dSnap) => {
               if (dSnap.exists()) {
                 const d = dSnap.data();
