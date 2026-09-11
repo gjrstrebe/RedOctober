@@ -269,7 +269,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const YOUR_FIREBASE_CONFIG = {
       apiKey: "AIzaSyDQuzprhL2M3hrR585iyHeLr0BtUTMfCxA",
@@ -282,23 +282,17 @@
       measurementId: "G-W0DFYH7M9Q"
     };
 
-    const AppIdStr = "red-october-sonar"; 
     let app, db, auth, currentUser = null;
     let audioCtx = null;
     let canvas, ctx, sweepAngle = 0;
     let unsubscribeScans = null;
 
     const state = {
-      gameId: 'event-init', activeGameName: 'Event #1', isEventActive: true,
+      gameId: 'event-init', activeGameName: 'Awaiting Event...', isEventActive: true,
       targetMode: 2, targetA: { x: 600, y: 600 }, targetB: { x: 300, y: 300 },
       template: 'red_october', customRules: '',
       scans: [], clues: []
     };
-
-    function safeUUID() {
-      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-      return 'uid-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
-    }
 
     function playSonarPing(freq = 880, duration = 0.4, type = 'sine') {
       try {
@@ -411,7 +405,7 @@
         dynamicHTML = `
           <div class="bg-amber-950/20 border border-amber-800/40 p-4 rounded text-amber-100 shadow-inner">
             <h3 class="text-amber-500 font-hud font-bold mb-2 tracking-wider">OPERATION RED OCTOBER</h3>
-            <p>The Host (Ask Tech Dad) has hidden high-value targets running silent in the grid. Triangulate their coordinates.</p>
+            <p>The Host has hidden high-value targets running silent in the grid. Triangulate their coordinates.</p>
           </div>
           <div class="space-y-3 mt-4">
             <h3 class="text-amber-500 font-hud font-bold border-b border-emerald-900/40 pb-1 tracking-wider">THE TERMS OF PEACE</h3>
@@ -439,6 +433,7 @@
 
     function renderLogsUI() {
       const list = document.getElementById('scanHistoryList');
+      if (!list) return;
       if (state.scans.length === 0) return list.innerHTML = `<div class="text-center text-emerald-700 py-8 italic">Radar sweeping... awaiting telemetry.</div>`;
       list.innerHTML = state.scans.slice().reverse().map(s => `
         <div class="p-2 rounded bg-black/60 border ${s.isHit ? 'border-red-500/80 text-red-300' : 'border-emerald-900/60'} flex justify-between items-center">
@@ -450,6 +445,7 @@
 
     function renderCluesUI() {
       const list = document.getElementById('activeCluesList');
+      if (!list) return;
       if (state.clues.length === 0) return list.innerHTML = `<div class="p-3 bg-black/50 rounded border border-emerald-900/50 text-emerald-600 italic text-center">Encrypted channel silent.</div>`;
       list.innerHTML = state.clues.map(c => `
         <div class="p-2 bg-amber-950/20 rounded border border-amber-900/40 flex items-start gap-2 text-amber-200">
@@ -483,6 +479,7 @@
         document.getElementById('tabSetupBtn').className = 'py-2 px-4 border-b-2 border-emerald-400 text-emerald-300 font-bold cursor-pointer';
         document.getElementById('tabHistoryBtn').className = 'py-2 px-4 border-b-2 border-transparent text-emerald-600 hover:text-emerald-400 cursor-pointer transition';
       };
+      
       document.getElementById('tabHistoryBtn').onclick = async () => {
         document.getElementById('tabSetupContent').classList.add('hidden'); document.getElementById('tabHistoryContent').classList.remove('hidden');
         document.getElementById('tabHistoryBtn').className = 'py-2 px-4 border-b-2 border-emerald-400 text-emerald-300 font-bold cursor-pointer';
@@ -526,6 +523,8 @@
             }
           });
           await Promise.all(deletes); 
+          state.scans = [];
+          renderLogsUI();
           alert('Current event scans wiped.');
         } else {
           state.scans = []; 
@@ -537,20 +536,26 @@
 
       document.getElementById('btnStartEvent').onclick = async () => {
         state.activeGameName = document.getElementById('adminEventNameInput').value || 'Event #1';
-        state.gameId = 'event-' + Date.now(); state.isEventActive = true;
+        state.gameId = 'event-' + Date.now(); 
+        state.isEventActive = true;
         state.targetMode = parseInt(document.getElementById('adminTargetCountSelect').value);
         state.template = document.getElementById('adminTemplateSelect').value;
         state.customRules = document.getElementById('adminCustomRulesInput').value;
         state.targetA = { x: parseInt(document.getElementById('adminTargetAX').value)||600, y: parseInt(document.getElementById('adminTargetAY').value)||600 };
         state.targetB = { x: parseInt(document.getElementById('adminTargetBX').value)||300, y: parseInt(document.getElementById('adminTargetBY').value)||300 };
+        state.scans = [];
         state.clues = [];
+        
         document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
-        renderRulesUI(); renderCluesUI();
+        renderRulesUI(); 
+        renderCluesUI();
+        renderLogsUI();
+
         if(db && currentUser) {
           await setDoc(doc(db, 'gameState', 'config'), state);
         }
         attachScansListener();
-        alert('Event Started!');
+        alert('Event Started & Synced!');
       };
 
       document.getElementById('btnEndEvent').onclick = async () => {
@@ -565,8 +570,10 @@
 
       document.getElementById('btnSendIntel').onclick = async () => {
         const input = document.getElementById('adminIntelInput'); if (!input.value.trim()) return;
-        state.clues.push({ text: input.value.trim(), time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-        input.value = ''; renderCluesUI();
+        const newClue = { text: input.value.trim(), time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+        state.clues.push(newClue);
+        input.value = ''; 
+        renderCluesUI();
         if(db && currentUser) await setDoc(doc(db, 'gameState', 'config'), state);
       };
 
@@ -624,7 +631,8 @@
                 const oldGameId = state.gameId;
                 Object.assign(state, d);
                 document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
-                renderRulesUI(); renderCluesUI();
+                renderRulesUI(); 
+                renderCluesUI();
                 
                 if (oldGameId !== state.gameId) {
                   attachScansListener();
