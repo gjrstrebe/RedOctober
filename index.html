@@ -311,16 +311,25 @@
       canvas = document.getElementById('radarCanvas');
       if (!canvas) return;
       ctx = canvas.getContext('2d');
-      const resizeCanvas = () => { if (canvas.parentElement) { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; } };
-      resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+      const resizeCanvas = () => { 
+        if (canvas.parentElement) { 
+          canvas.width = canvas.parentElement.clientWidth; 
+          canvas.height = canvas.parentElement.clientHeight; 
+        } 
+      };
+      resizeCanvas(); 
+      window.addEventListener('resize', resizeCanvas);
 
       const handleInteract = (e) => {
         if(e.type.includes('touch')) e.preventDefault();
         const rect = canvas.getBoundingClientRect();
         let cX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : (e.changedTouches ? e.changedTouches[0].clientX : 0));
         let cY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : (e.changedTouches ? e.changedTouches[0].clientY : 0));
+        
+        // Map click precisely to 0-1200 grid
         const x = Math.round(Math.max(0, Math.min(1200, ((cX - rect.left) / rect.width) * 1200)));
         const y = Math.round(Math.max(0, Math.min(1200, ((cY - rect.top) / rect.height) * 1200)));
+        
         document.getElementById('cursorCoords').innerText = `X: ${x} | Y: ${y}`;
         if(e.type === 'click' || e.type === 'touchend') {
           document.getElementById('scanXInput').value = x;
@@ -353,11 +362,16 @@
       ctx.setLineDash([]); ctx.strokeStyle = 'rgba(16, 185, 129, 0.15)';
       ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
 
-      state.scans.slice(-20).forEach(s => {
-        const px = (s.x / 1200) * canvas.width, py = (s.y / 1200) * canvas.height;
+      // Plot scans using absolute 0-1200 mapping onto canvas width/height
+      state.scans.slice(-30).forEach(s => {
+        const px = (s.x / 1200) * canvas.width;
+        const py = (s.y / 1200) * canvas.height;
         ctx.fillStyle = s.isHit ? '#ef4444' : (s.distance <= 30 ? '#f59e0b' : '#10b981');
-        ctx.shadowBlur = s.isHit ? 10 : 0; ctx.shadowColor = ctx.fillStyle;
-        ctx.beginPath(); ctx.arc(px, py, s.isHit ? 5 : 3, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = s.isHit ? 12 : 0; 
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.beginPath(); 
+        ctx.arc(px, py, s.isHit ? 6 : 4, 0, Math.PI*2); 
+        ctx.fill();
         ctx.shadowBlur = 0;
       });
 
