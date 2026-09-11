@@ -53,8 +53,8 @@
       </div>
 
       <div class="flex items-center space-x-2 md:space-x-3">
-        <div id="networkStatusBadge" class="text-[10px] px-2 py-1 rounded-sm bg-black/60 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-mono hidden sm:flex">
-          <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span><span>CONNECTING...</span>
+        <div id="networkStatusBadge" class="text-[10px] px-2 py-1 rounded-sm bg-black/60 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 font-mono">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" id="networkDot"></span><span id="networkText">LIVE SYNC</span>
         </div>
         
         <button id="btnOpenRules" class="px-3 py-2 rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-300 text-xs font-hud border border-amber-500/50 transition active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.15)]">
@@ -232,7 +232,7 @@
           </div>
 
           <div class="pt-4 flex flex-col gap-2 mt-2">
-            <button id="btnWipeScans" class="w-full py-2 bg-orange-900/50 hover:bg-orange-800 border border-orange-700/60 font-hud text-[10px] font-bold text-orange-200 rounded cursor-pointer transition">WIPE CURRENT EVENT SCANS</button>
+            <button id="btnWipeScans" class="w-full py-2 bg-orange-900/50 hover:bg-orange-800 border border-orange-700/60 font-hud text-[10px] font-bold text-orange-200 rounded cursor-pointer transition">WIPE CURRENT SCANS</button>
             <button id="btnStartEvent" class="w-full py-2.5 bg-emerald-800 hover:bg-emerald-700 font-hud text-xs font-bold text-emerald-100 rounded border border-emerald-600/50 cursor-pointer transition">START / UPDATE EVENT</button>
             <button id="btnEndEvent" class="w-full py-2.5 bg-red-950/60 hover:bg-red-900 border border-red-800/60 font-hud text-xs font-bold text-red-300 rounded cursor-pointer transition">END & ARCHIVE EVENT</button>
           </div>
@@ -286,6 +286,7 @@
     let app, db, auth, currentUser = null;
     let audioCtx = null;
     let canvas, ctx, sweepAngle = 0;
+    let unsubscribeScans = null;
 
     const state = {
       gameId: 'event-init', activeGameName: 'Event #1', isEventActive: true,
@@ -515,12 +516,20 @@
       };
 
       document.getElementById('btnWipeScans').onclick = async () => {
-        if (!confirm('WARNING: Wipes current event scans only. Proceed?')) return;
-        state.scans = []; renderLogsUI();
+        if (!confirm('WARNING: Wipes current active event scans only. Proceed?')) return;
         if(db && currentUser) {
           const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
-          const deletes = []; snap.forEach(d => { if(d.data().gameId === state.gameId) deletes.push(deleteDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'scans', d.id))); });
-          await Promise.all(deletes); alert('Scans wiped.');
+          const deletes = []; 
+          snap.forEach(d => { 
+            if(d.data().gameId === state.gameId) {
+              deletes.push(deleteDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'scans', d.id))); 
+            }
+          });
+          await Promise.all(deletes); 
+          alert('Current event scans wiped.');
+        } else {
+          state.scans = []; 
+          renderLogsUI();
         }
       };
 
@@ -534,10 +543,12 @@
         state.customRules = document.getElementById('adminCustomRulesInput').value;
         state.targetA = { x: parseInt(document.getElementById('adminTargetAX').value)||600, y: parseInt(document.getElementById('adminTargetAY').value)||600 };
         state.targetB = { x: parseInt(document.getElementById('adminTargetBX').value)||300, y: parseInt(document.getElementById('adminTargetBY').value)||300 };
-        state.scans = []; state.clues = [];
+        state.clues = [];
         document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
-        renderRulesUI(); renderCluesUI(); renderLogsUI();
-        if(db && currentUser) await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
+        renderRulesUI(); renderCluesUI();
+        if(db && currentUser) {
+          await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
+        }
         alert('Event Started!');
       };
 
@@ -558,7 +569,7 @@
         if(db && currentUser) await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
       };
 
-      document.getElementById('btnTransmitPing').onclick = () => {
+      document.getElementById('btnTransmitPing').onclick = async () => {
         if (!state.isEventActive) return alert('Event is archived.');
         const ign = document.getElementById('playerIgnInput').value.trim() || 'Ghost';
         const x = parseInt(document.getElementById('scanXInput').value), y = parseInt(document.getElementById('scanYInput').value);
@@ -571,10 +582,28 @@
         if (isHit) sig = 'DIRECT HIT! TARGET REVEALED!'; else if (minDist <= 30) sig = 'THERMAL FLARE DETECTED!'; else if (minDist <= 100) sig = 'WARM SONAR ECHO'; else if (minDist <= 250) sig = 'FAINT DISTANT PING';
 
         const scan = { id: safeUUID(), gameId: state.gameId, ign, x, y, distance: Math.round(minDist), signal: sig, isHit, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) };
-        state.scans.push(scan); playSonarPing(isHit ? 1200 : (minDist < 50 ? 800 : 400), isHit ? 1.0 : 0.4, isHit ? 'square' : 'sine');
-        renderLogsUI();
-        if(db && currentUser) addDoc(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), scan).catch(console.error);
+        playSonarPing(isHit ? 1200 : (minDist < 50 ? 800 : 400), isHit ? 1.0 : 0.4, isHit ? 'square' : 'sine');
+
+        if(db && currentUser) {
+          await addDoc(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), scan).catch(console.error);
+        } else {
+          state.scans.push(scan);
+          renderLogsUI();
+        }
       };
+    }
+
+    function attachScansListener() {
+      if (unsubscribeScans) unsubscribeScans();
+      unsubscribeScans = onSnapshot(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), (snap) => {
+        const fetched = []; 
+        snap.forEach(d => { 
+          const data = d.data();
+          if(data.gameId === state.gameId) fetched.push(data); 
+        });
+        state.scans = fetched.sort((a,b)=>a.time.localeCompare(b.time)); 
+        renderLogsUI();
+      });
     }
 
     function bootApp() {
@@ -584,22 +613,37 @@
         onAuthStateChanged(auth, async (u) => {
           if (u) {
             currentUser = u;
-            document.getElementById('networkStatusBadge').classList.remove('hidden');
+            document.getElementById('networkText').innerText = "LIVE SYNC";
+            document.getElementById('networkDot').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+            
+            // Listen to game config state
             onSnapshot(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), (dSnap) => {
               if (dSnap.exists()) {
                 const d = dSnap.data();
+                const oldGameId = state.gameId;
                 Object.assign(state, d);
                 document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
                 renderRulesUI(); renderCluesUI();
+                
+                // If gameId changed or initial load, attach scan listener for this game
+                if (oldGameId !== state.gameId) {
+                  attachScansListener();
+                }
+              } else {
+                // Initialize default config if none exists
+                setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state).catch(console.warn);
+                attachScansListener();
               }
             });
-            onSnapshot(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), (snap) => {
-              const fetched = []; snap.forEach(d => { if(d.data().gameId === state.gameId) fetched.push(d.data()); });
-              state.scans = fetched.sort((a,b)=>a.time.localeCompare(b.time)); renderLogsUI();
-            });
-          } else signInAnonymously(auth).catch(console.warn);
+          } else {
+            signInAnonymously(auth).catch(console.warn);
+          }
         });
-      } catch(e) { console.warn("Firebase offline"); }
+      } catch(e) { 
+        console.warn("Firebase offline mode", e); 
+        document.getElementById('networkText').innerText = "OFFLINE";
+        document.getElementById('networkDot').className = "w-2 h-2 rounded-full bg-amber-500";
+      }
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootApp); else bootApp();
