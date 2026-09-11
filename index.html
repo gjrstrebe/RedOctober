@@ -146,7 +146,7 @@
         <button id="btnCloseRules" class="text-amber-600 hover:text-amber-400 cursor-pointer text-2xl transition"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="dynamicRulesContent" class="text-emerald-100/90 text-sm space-y-6 relative z-10 font-mono leading-relaxed">
-        <!-- Content injected by JS based on template -->
+        <!-- Content injected by JS -->
       </div>
       <div class="mt-8 pt-6 border-t border-amber-900/60 text-center relative z-10">
         <button id="btnAcknowledgeRules" class="px-8 py-3 bg-gradient-to-r from-amber-700 to-amber-600 text-black font-hud font-black tracking-widest rounded shadow-[0_0_15px_rgba(245,158,11,0.3)] transition active:scale-95 cursor-pointer">
@@ -489,7 +489,7 @@
         document.getElementById('tabSetupBtn').className = 'py-2 px-4 border-b-2 border-transparent text-emerald-600 hover:text-emerald-400 cursor-pointer transition';
         const list = document.getElementById('archiveList');
         if(!db) return list.innerHTML = `<div class="text-center text-emerald-700 py-2">Offline Mode.</div>`;
-        const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'games'));
+        const snap = await getDocs(collection(db, 'games'));
         const arr = []; snap.forEach(d => arr.push(d.data())); arr.sort((a,b)=>b.endedAt - a.endedAt);
         if(arr.length === 0) return list.innerHTML = `<div class="text-center text-emerald-700 py-2">No archives found.</div>`;
         list.innerHTML = arr.map(g => `
@@ -506,7 +506,7 @@
       window.viewArchive = async (gid) => {
         document.getElementById('archiveModal').classList.remove('hidden');
         const c = document.getElementById('archiveLogsContent'); c.innerHTML = '<div class="text-center py-4 text-emerald-500">Fetching logs...</div>';
-        const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
+        const snap = await getDocs(collection(db, 'scans'));
         const arr = []; snap.forEach(d => { if(d.data().gameId === gid) arr.push(d.data()); });
         if(arr.length===0) return c.innerHTML = '<div class="text-center text-emerald-700">No logs found.</div>';
         c.innerHTML = arr.sort((a,b)=>a.time.localeCompare(b.time)).map(s => `
@@ -518,11 +518,11 @@
       document.getElementById('btnWipeScans').onclick = async () => {
         if (!confirm('WARNING: Wipes current active event scans only. Proceed?')) return;
         if(db && currentUser) {
-          const snap = await getDocs(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'));
+          const snap = await getDocs(collection(db, 'scans'));
           const deletes = []; 
           snap.forEach(d => { 
             if(d.data().gameId === state.gameId) {
-              deletes.push(deleteDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'scans', d.id))); 
+              deletes.push(deleteDoc(doc(db, 'scans', d.id))); 
             }
           });
           await Promise.all(deletes); 
@@ -547,8 +547,9 @@
         document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
         renderRulesUI(); renderCluesUI();
         if(db && currentUser) {
-          await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
+          await setDoc(doc(db, 'gameState', 'config'), state);
         }
+        attachScansListener();
         alert('Event Started!');
       };
 
@@ -556,8 +557,8 @@
         if (!confirm('End and archive event?')) return;
         state.isEventActive = false;
         if(db && currentUser) {
-          await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'games', state.gameId), { gameId: state.gameId, name: state.activeGameName, endedAt: Date.now(), totalScans: state.scans.length });
-          await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
+          await setDoc(doc(db, 'games', state.gameId), { gameId: state.gameId, name: state.activeGameName, endedAt: Date.now(), totalScans: state.scans.length });
+          await setDoc(doc(db, 'gameState', 'config'), state);
         }
         alert('Archived.');
       };
@@ -566,7 +567,7 @@
         const input = document.getElementById('adminIntelInput'); if (!input.value.trim()) return;
         state.clues.push({ text: input.value.trim(), time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
         input.value = ''; renderCluesUI();
-        if(db && currentUser) await setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state);
+        if(db && currentUser) await setDoc(doc(db, 'gameState', 'config'), state);
       };
 
       document.getElementById('btnTransmitPing').onclick = async () => {
@@ -581,11 +582,11 @@
         let sig = 'COLD OCEAN WATERS';
         if (isHit) sig = 'DIRECT HIT! TARGET REVEALED!'; else if (minDist <= 30) sig = 'THERMAL FLARE DETECTED!'; else if (minDist <= 100) sig = 'WARM SONAR ECHO'; else if (minDist <= 250) sig = 'FAINT DISTANT PING';
 
-        const scan = { id: safeUUID(), gameId: state.gameId, ign, x, y, distance: Math.round(minDist), signal: sig, isHit, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) };
+        const scan = { gameId: state.gameId, ign, x, y, distance: Math.round(minDist), signal: sig, isHit, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) };
         playSonarPing(isHit ? 1200 : (minDist < 50 ? 800 : 400), isHit ? 1.0 : 0.4, isHit ? 'square' : 'sine');
 
         if(db && currentUser) {
-          await addDoc(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), scan).catch(console.error);
+          await addDoc(collection(db, 'scans'), scan).catch(console.error);
         } else {
           state.scans.push(scan);
           renderLogsUI();
@@ -595,7 +596,7 @@
 
     function attachScansListener() {
       if (unsubscribeScans) unsubscribeScans();
-      unsubscribeScans = onSnapshot(collection(db, 'artifacts', AppIdStr, 'public', 'data', 'scans'), (snap) => {
+      unsubscribeScans = onSnapshot(collection(db, 'scans'), (snap) => {
         const fetched = []; 
         snap.forEach(d => { 
           const data = d.data();
@@ -617,7 +618,7 @@
             document.getElementById('networkDot').className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
             
             // Listen to game config state
-            onSnapshot(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), (dSnap) => {
+            onSnapshot(doc(db, 'gameState', 'config'), (dSnap) => {
               if (dSnap.exists()) {
                 const d = dSnap.data();
                 const oldGameId = state.gameId;
@@ -625,16 +626,15 @@
                 document.getElementById('activeEventNameDisplay').innerText = state.activeGameName;
                 renderRulesUI(); renderCluesUI();
                 
-                // If gameId changed or initial load, attach scan listener for this game
                 if (oldGameId !== state.gameId) {
                   attachScansListener();
                 }
               } else {
-                // Initialize default config if none exists
-                setDoc(doc(db, 'artifacts', AppIdStr, 'public', 'data', 'game_state', 'config'), state).catch(console.warn);
+                setDoc(doc(db, 'gameState', 'config'), state).catch(console.warn);
                 attachScansListener();
               }
             });
+            attachScansListener();
           } else {
             signInAnonymously(auth).catch(console.warn);
           }
